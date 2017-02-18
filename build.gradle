@@ -1,0 +1,28 @@
+group 'fr.litarvan.craftix'
+version '1.0.0'
+
+apply plugin: 'java'
+
+sourceCompatibility = 1.6
+targetCompatibility = 1.6
+
+repositories {
+    mavenCentral()
+
+    maven {
+        url 'http://wytrem.github.io/maven'
+    }
+
+    maven {
+        url 'http://litarvan.github.io/maven'
+    }
+}
+
+dependencies {
+    compile 'org.java-websocket:Java-WebSocket:1.3.0'
+    compile 'org.json:json:20160810'
+    compile 'net.wytrem:wylog:1.2'
+
+    compile 'fr.litarvan:openauth:1.0.3-SNAPSHOT'
+    compile 'fr.litarvan:openlauncherlib:3.0.3-BETA'
+}
