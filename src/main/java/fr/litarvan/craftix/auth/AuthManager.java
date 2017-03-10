@@ -47,4 +47,15 @@ public interface AuthManager<E extends Exception>
      * @return The {@link AuthResult} containing the player infos
      */
     AuthResult refresh(CraftixServer server, String accessToken, String clientToken) throws E;
+
+    /**
+     * Delete the current session
+     *
+     * @param server The current Craftix server
+     * @param accessToken The session access token
+     * @param clientToken This launcher client token
+     *
+     * @return If it worked
+     */
+    boolean logout(CraftixServer server, String accessToken, String clientToken) throws E;
 }

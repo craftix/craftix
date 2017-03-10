@@ -18,18 +18,24 @@
  */
 package fr.litarvan.craftix;
 
+import fr.litarvan.craftix.auth.AuthManager;
+import fr.litarvan.craftix.auth.OpenAuthManager;
 import fr.litarvan.craftix.launch.CraftixLauncher;
 import fr.litarvan.craftix.launch.OpenLauncherLibLauncher;
+import java.io.BufferedReader;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.InetSocketAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 import net.wytrem.logging.Logger;
 import net.wytrem.logging.LoggerFactory;
-import org.java_websocket.WebSocket;
-import org.java_websocket.handshake.ClientHandshake;
-import org.java_websocket.server.WebSocketServer;
 import org.json.JSONObject;
 
 /**
@@ -44,7 +50,7 @@ import org.json.JSONObject;
  * @version 1.0.0
  * @since 1.0.0
  */
-public class CraftixServer extends WebSocketServer
+public class CraftixServer
 {
     /**
      * The Craftix version
@@ -57,6 +63,11 @@ public class CraftixServer extends WebSocketServer
     public static final String REASON_CLOSED = "mc_closed";
 
     /**
+     * The server
+     */
+    private ServerSocket socket;
+
+    /**
      * Server logger
      */
     private Logger logger;
@@ -64,10 +75,15 @@ public class CraftixServer extends WebSocketServer
     /**
      * The commands that the server can receive from the client
      */
-    private List<CraftixCommand> commands = new ArrayList<>();
+    private List<CraftixCommand> commands = new ArrayList<CraftixCommand>();
 
     /**
-     * The Game launcher
+     * The authentication manager
+     */
+    private AuthManager authManager = new OpenAuthManager();
+
+    /**
+     * The game launcher
      */
     private CraftixLauncher launcher = new OpenLauncherLibLauncher();
 
@@ -77,9 +93,10 @@ public class CraftixServer extends WebSocketServer
      * @param address The address to use
      * @param logFile The file where the logs will be output
      */
-    public CraftixServer(InetSocketAddress address, File logFile)
+    public CraftixServer(InetSocketAddress address, File logFile) throws IOException
     {
-        super(address);
+        socket = new ServerSocket();
+        socket.bind(address);
 
         try
         {
@@ -94,44 +111,74 @@ public class CraftixServer extends WebSocketServer
         logger = LoggerFactory.getLogger(CraftixServer.class);
     }
 
-    @Override
-    public void onOpen(WebSocket conn, ClientHandshake handshake)
+    public void start()
+    {
+        int result = 0;
+
+        PrintWriter out = null;
+        BufferedReader in = null;
+        Socket client = null;
+
+        try
+        {
+            logger.info("Listening on craftix://" + socket.getInetAddress().getHostAddress() + ":" + socket.getLocalPort());
+            client = socket.accept();
+
+            logger.info("Launched conneced");
+
+            out = new PrintWriter(new DataOutputStream(client.getOutputStream()));
+            in = new BufferedReader(new InputStreamReader(new DataInputStream(client.getInputStream())));
+
+            onOpen(out);
+
+            logger.info("Listening for commands...");
+            String line;
+
+            while ((line = in.readLine()) != null)
+            {
+                onMessage(out, line);
+            }
+
+            logger.info("Launcher closed connection, closing server");
+        }
+        catch (IOException e)
+        {
+            logger.info("Server crashed !", e);
+            result = 1;
+        }
+        finally
+        {
+            if (out != null)
+            {
+                out.close();
+            }
+
+            if (client != null)
+            {
+                try
+                {
+                    client.close();
+                }
+                catch (IOException ignored)
+                {
+                }
+            }
+        }
+
+        System.exit(result);
+    }
+
+    public void onOpen(PrintWriter writer)
     {
         JSONObject object = new JSONObject();
 
         object.put("status", "ok");
         object.put("version", VERSION);
 
-        conn.send(object.toString());
+        writer.print(object.toString());
     }
 
-    @Override
-    public void onClose(WebSocket conn, int code, String reason, boolean remote)
-    {
-        String error = "(code : " + code + ", reason : " + reason + ")";
-
-        if (remote)
-        {
-            logger.info("Remote closed connection " + error);
-            logger.info("Exiting");
-
-            System.exit(0);
-        }
-
-        if (reason.equals(REASON_CLOSED))
-        {
-            logger.info("Minecraft was closed " + error);
-            logger.info("Exiting");
-
-            System.exit(0);
-        }
-
-        logger.info("Unexcepted socket close, " + (remote ? "by the server itself, it probably crashed. " : "by remote, it was probably closed. ") + error);
-        System.exit(1);
-    }
-
-    @Override
-    public void onMessage(WebSocket conn, String message)
+    public void onMessage(PrintWriter out, String message)
     {
         JSONObject object = new JSONObject(message);
 
@@ -142,16 +189,23 @@ public class CraftixServer extends WebSocketServer
         {
             if (command.getIdentifier().equals(id))
             {
-                conn.send(command.call(params).toString());
+                try
+                {
+                    out.print(command.call(params).toString());
+                }
+                catch (Exception e)
+                {
+                    onError(out, e);
+                }
+
                 return;
             }
         }
 
-        onError(conn, new IllegalArgumentException("Unknown command '" + id + "'"));
+        onError(out, new IllegalArgumentException("Unknown command '" + id + "'"));
     }
 
-    @Override
-    public void onError(WebSocket conn, Exception ex)
+    public void onError(PrintWriter out, Exception ex)
     {
         logger.error("Exception thrown : ", ex);
         logger.error("Sending it to the server");
@@ -162,7 +216,7 @@ public class CraftixServer extends WebSocketServer
         object.put("message", ex.getMessage());
         object.put("type", ex.getClass().getName());
 
-        conn.send(object.toString());
+        out.print(object.toString());
     }
 
     /**
@@ -189,7 +243,7 @@ public class CraftixServer extends WebSocketServer
      *
      * @param port The port to use (wrapper will try to find one)
      */
-    public static void startServer(int port)
+    public static void startServer(int port) throws IOException
     {
         InetSocketAddress address = new InetSocketAddress("127.0.0.1", port);
         File logsFile = new File("server.log");

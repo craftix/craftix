@@ -26,6 +26,8 @@ import fr.theshark34.openauth.model.AuthAgent;
 import fr.theshark34.openauth.model.AuthProfile;
 import fr.theshark34.openauth.model.response.AuthResponse;
 import fr.theshark34.openauth.model.response.RefreshResponse;
+import net.wytrem.logging.Logger;
+import net.wytrem.logging.LoggerFactory;
 
 /**
  * OpenAuth Auth Manager
@@ -40,6 +42,8 @@ import fr.theshark34.openauth.model.response.RefreshResponse;
  */
 public class OpenAuthManager implements AuthManager<AuthenticationException>
 {
+    private static final Logger logger = LoggerFactory.getLogger(OpenAuthManager.class);
+
     /**
      * OpenAuth authenticator
      */
@@ -48,8 +52,12 @@ public class OpenAuthManager implements AuthManager<AuthenticationException>
     @Override
     public AuthResult authenticate(CraftixServer server, String username, String password, String clientToken) throws AuthenticationException
     {
+        logger.info("Authenticating '" + username + "' (" + getAuthServer() + AuthPoints.NORMAL_AUTH_POINTS.getAuthenticatePoint() + ")");
+
         AuthResponse response = authenticator.authenticate(AuthAgent.MINECRAFT, username, password, clientToken);
         AuthProfile profile = response.getSelectedProfile();
+
+        logger.info("Success ! Player '" + profile.getName() + "' (" + profile.getId() + ") connected !");
 
         return new AuthResult(profile.getName(), profile.getId(), response.getAccessToken(), response.getClientToken());
     }
@@ -57,10 +65,26 @@ public class OpenAuthManager implements AuthManager<AuthenticationException>
     @Override
     public AuthResult refresh(CraftixServer server, String accessToken, String clientToken) throws AuthenticationException
     {
+        logger.info("Refreshing session (" + getAuthServer() + AuthPoints.NORMAL_AUTH_POINTS.getRefreshPoint() + ")");
+
         RefreshResponse response = authenticator.refresh(accessToken, clientToken);
         AuthProfile profile = response.getSelectedProfile();
 
+        logger.info("Success ! Player '" + profile.getName() + "' (" + profile.getId() + ") connected !");
+
         return new AuthResult(profile.getName(), profile.getId(), response.getAccessToken(), response.getClientToken());
+    }
+
+    @Override
+    public boolean logout(CraftixServer server, String accessToken, String clientToken) throws AuthenticationException
+    {
+        logger.info("Terminating session (" + getAuthServer() + AuthPoints.NORMAL_AUTH_POINTS.getInvalidatePoint() + ")");
+
+        authenticator.invalidate(accessToken, clientToken);
+
+        logger.info("Logged out !");
+
+        return true;
     }
 
     /**

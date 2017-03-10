@@ -63,5 +63,5 @@ public abstract class CraftixCommand
      *
      * @return A JSONObject that will be sent to the client
      */
-    public abstract JSONObject call(JSONObject params);
+    public abstract JSONObject call(JSONObject params) throws Exception;
 }

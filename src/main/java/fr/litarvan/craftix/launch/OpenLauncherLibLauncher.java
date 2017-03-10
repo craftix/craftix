@@ -33,6 +33,7 @@ import fr.theshark34.openlauncherlib.minecraft.GameType;
 import fr.theshark34.openlauncherlib.minecraft.GameVersion;
 import fr.theshark34.openlauncherlib.minecraft.MinecraftLauncher;
 import fr.theshark34.openlauncherlib.minecraft.util.GameDirGenerator;
+import fr.theshark34.openlauncherlib.util.ProcessLogManager;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -56,7 +57,7 @@ public class OpenLauncherLibLauncher implements CraftixLauncher<LaunchException>
         AuthInfos authInfos = new AuthInfos(auth.getUsername(), auth.getAccessToken(), auth.getUuid());
         GameType type = getGameType(config);
 
-        ArrayList<GameTweak> tweaks = new ArrayList<>();
+        ArrayList<GameTweak> tweaks = new ArrayList<GameTweak>();
 
         for (String str : config.getTweaks())
         {
@@ -114,8 +115,10 @@ public class OpenLauncherLibLauncher implements CraftixLauncher<LaunchException>
 
         ExternalLauncher launcher = new ExternalLauncher(profile);
         Process p = launcher.launch();
+        ProcessLogManager manager = new ProcessLogManager(p.getInputStream());
 
         callback.run();
+        manager.start();
 
         try
         {
