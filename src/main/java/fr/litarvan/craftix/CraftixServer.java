@@ -191,7 +191,7 @@ public class CraftixServer
             {
                 try
                 {
-                    out.print(command.call(params).toString());
+                    out.print(command.call(this, params).toString());
                 }
                 catch (Exception e)
                 {
@@ -235,6 +235,42 @@ public class CraftixServer
     public CraftixCommand[] getCommands()
     {
         return this.commands.toArray(new CraftixCommand[this.commands.size()]);
+    }
+
+    /**
+     * @return The authentication manager
+     */
+    public AuthManager getAuthManager()
+    {
+        return authManager;
+    }
+
+    /**
+     * Set the authentication manager
+     *
+     * @param authManager The new authentication manager
+     */
+    public void setAuthManager(AuthManager authManager)
+    {
+        this.authManager = authManager;
+    }
+
+    /**
+     * @return The game launcher
+     */
+    public CraftixLauncher getLauncher()
+    {
+        return launcher;
+    }
+
+    /**
+     * Set the game launcher
+     *
+     * @param launcher The new game launcher
+     */
+    public void setLauncher(CraftixLauncher launcher)
+    {
+        this.launcher = launcher;
     }
 
     /**
