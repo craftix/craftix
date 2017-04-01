@@ -21,23 +21,17 @@ package fr.litarvan.craftix.launch;
 import fr.litarvan.craftix.CraftixServer;
 import fr.litarvan.craftix.auth.AuthResult;
 import fr.theshark34.openlauncherlib.LaunchException;
-import fr.theshark34.openlauncherlib.external.ExternalLaunchProfile;
-import fr.theshark34.openlauncherlib.external.ExternalLauncher;
-import fr.theshark34.openlauncherlib.internal.InternalLaunchProfile;
-import fr.theshark34.openlauncherlib.internal.InternalLauncher;
-import fr.theshark34.openlauncherlib.minecraft.AuthInfos;
-import fr.theshark34.openlauncherlib.minecraft.GameFolder;
-import fr.theshark34.openlauncherlib.minecraft.GameInfos;
-import fr.theshark34.openlauncherlib.minecraft.GameTweak;
-import fr.theshark34.openlauncherlib.minecraft.GameType;
-import fr.theshark34.openlauncherlib.minecraft.GameVersion;
-import fr.theshark34.openlauncherlib.minecraft.MinecraftLauncher;
+import fr.theshark34.openlauncherlib.external.*;
+import fr.theshark34.openlauncherlib.internal.*;
+import fr.theshark34.openlauncherlib.minecraft.*;
 import fr.theshark34.openlauncherlib.minecraft.util.GameDirGenerator;
 import fr.theshark34.openlauncherlib.util.ProcessLogManager;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import net.wytrem.logging.Logger;
+import net.wytrem.logging.LoggerFactory;
 
 /**
  * OpenLauncherLib Craftix Launcher
@@ -51,11 +45,17 @@ import java.util.List;
  */
 public class OpenLauncherLibLauncher implements CraftixLauncher<LaunchException>
 {
+    private static final Logger logger = LoggerFactory.getLogger(OpenLauncherLibLauncher.class);
+
     @Override
-    public void launch(CraftixServer server, LaunchConfig config, AuthResult auth, Runnable callback) throws LaunchException
+    public void launch(CraftixServer server, LaunchConfig config, AuthResult auth) throws LaunchException
     {
+        logger.info("Launching Minecraft using OpenLauncherLib");
+
         AuthInfos authInfos = new AuthInfos(auth.getUsername(), auth.getAccessToken(), auth.getUuid());
         GameType type = getGameType(config);
+
+        logger.info("GameType detected : " + type.getName());
 
         ArrayList<GameTweak> tweaks = new ArrayList<GameTweak>();
 
@@ -75,18 +75,22 @@ public class OpenLauncherLibLauncher implements CraftixLauncher<LaunchException>
             {
                 tweaks.add(GameTweak.SHADER);
             }
+
+            logger.info("Adding tweak : " + tweaks.get(tweaks.size() - 1).getName());
         }
 
         GameInfos infos = new GameInfos(config.getName(), getGameDir(config.getName()), new GameVersion(config.getVersion(), type), tweaks.toArray(new GameTweak[tweaks.size()]));
+        logger.info("From directory : " + infos.getGameDir().getAbsolutePath());
 
         if (config.getVmParams() == null || config.getVmParams().length == 0)
         {
-            callback.run();
+            logger.info("Using internal launching");
             internalLaunch(infos, authInfos);
         }
         else
         {
-            externalLaunch(infos, config.getVmParams(), authInfos, callback);
+            logger.info("Using external launching");
+            externalLaunch(infos, config.getVmParams(), authInfos);
         }
     }
 
@@ -95,10 +99,11 @@ public class OpenLauncherLibLauncher implements CraftixLauncher<LaunchException>
         InternalLaunchProfile profile = MinecraftLauncher.createInternalProfile(infos, getGameFolder(), authInfos);
         InternalLauncher launcher = new InternalLauncher(profile);
 
+        logger.info("Launching Minecraft : " + infos.getServerName());
         launcher.launch();
     }
 
-    protected void externalLaunch(GameInfos infos, String[] vmParams, AuthInfos authInfos, Runnable callback) throws LaunchException
+    protected void externalLaunch(GameInfos infos, String[] vmParams, AuthInfos authInfos) throws LaunchException
     {
         ExternalLaunchProfile profile = MinecraftLauncher.createExternalProfile(infos, getGameFolder(), authInfos);
 
@@ -117,7 +122,7 @@ public class OpenLauncherLibLauncher implements CraftixLauncher<LaunchException>
         Process p = launcher.launch();
         ProcessLogManager manager = new ProcessLogManager(p.getInputStream());
 
-        callback.run();
+        logger.info("Launched Minecraft : " + infos.getServerName());
         manager.start();
 
         try

@@ -20,6 +20,8 @@ public class AuthenticateCommand extends CraftixCommand
         AuthManager auth = server.getAuthManager();
         AuthResult result = auth.authenticate(server, params.getString("username"), params.getString("password"), params.getString("client-token"));
 
+        server.setAuthResult(result);
+
         return new JSONObject(result);
     }
 }

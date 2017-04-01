@@ -19,9 +19,11 @@
 package fr.litarvan.craftix;
 
 import fr.litarvan.craftix.auth.AuthManager;
+import fr.litarvan.craftix.auth.AuthResult;
 import fr.litarvan.craftix.auth.OpenAuthManager;
 import fr.litarvan.craftix.launch.CraftixLauncher;
 import fr.litarvan.craftix.launch.OpenLauncherLibLauncher;
+import fr.litarvan.craftix.update.UpdateManager;
 import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -58,6 +60,14 @@ public class CraftixServer
     public static final String VERSION = "1.0.0";
 
     /**
+     * JSON object used when the command successfully executed
+     * and don't return anything
+     */
+    public static final JSONObject SUCCESS = new JSONObject(); static {
+        SUCCESS.put("success", true);
+    }
+
+    /**
      * WebSocket closed reason when Minecraft was closed
      */
     public static final String REASON_CLOSED = "mc_closed";
@@ -83,9 +93,19 @@ public class CraftixServer
     private AuthManager authManager = new OpenAuthManager();
 
     /**
+     * The update manager
+     */
+    private UpdateManager updateManager;
+
+    /**
      * The game launcher
      */
     private CraftixLauncher launcher = new OpenLauncherLibLauncher();
+
+    /**
+     * The authentication result
+     */
+    private AuthResult authResult;
 
     /**
      * A WebSocket server with the given log file
@@ -165,6 +185,7 @@ public class CraftixServer
             }
         }
 
+        logger.info("Closing...");
         System.exit(result);
     }
 
@@ -176,6 +197,8 @@ public class CraftixServer
         object.put("version", VERSION);
 
         writer.print(object.toString());
+
+        logger.info("Connection opened ! Sent status message");
     }
 
     public void onMessage(PrintWriter out, String message)
@@ -185,16 +208,20 @@ public class CraftixServer
         String id = object.getString("command");
         JSONObject params = object.getJSONObject("params");
 
+        logger.info("Command received : '" + id + "'");
+
         for (CraftixCommand command : commands)
         {
             if (command.getIdentifier().equals(id))
             {
                 try
                 {
+                    logger.info("Executing command '" + command.getIdentifier() + "'");
                     out.print(command.call(this, params).toString());
                 }
                 catch (Exception e)
                 {
+                    logger.error("Command failed !");
                     onError(out, e);
                 }
 
@@ -202,6 +229,7 @@ public class CraftixServer
             }
         }
 
+        logger.error("Couldn't find the command, sending error message");
         onError(out, new IllegalArgumentException("Unknown command '" + id + "'"));
     }
 
@@ -212,9 +240,8 @@ public class CraftixServer
 
         JSONObject object = new JSONObject();
 
-        object.put("type", "error");
+        object.put("error", ex.getClass().getName());
         object.put("message", ex.getMessage());
-        object.put("type", ex.getClass().getName());
 
         out.print(object.toString());
     }
@@ -253,6 +280,46 @@ public class CraftixServer
     public void setAuthManager(AuthManager authManager)
     {
         this.authManager = authManager;
+    }
+
+    /**
+     * @return The Authentication result set by the
+     * {@link fr.litarvan.craftix.command.AuthenticateCommand} after it
+     * was executed
+     */
+    public AuthResult getAuthResult()
+    {
+        return authResult;
+    }
+
+    /**
+     * Set the Authentication result (called by the
+     * {@link fr.litarvan.craftix.command.AuthenticateCommand} for
+     * the {@link CraftixLauncher}
+     *
+     * @param authResult The result of the Authentication
+     */
+    public void setAuthResult(AuthResult authResult)
+    {
+        this.authResult = authResult;
+    }
+
+    /**
+     * @return The update manager
+     */
+    public UpdateManager getUpdateManager()
+    {
+        return updateManager;
+    }
+
+    /**
+     * Set the update manager
+     *
+     * @param updateManager The new update manager
+     */
+    public void setUpdateManager(UpdateManager updateManager)
+    {
+        this.updateManager = updateManager;
     }
 
     /**

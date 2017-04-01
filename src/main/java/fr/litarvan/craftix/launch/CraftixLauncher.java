@@ -42,8 +42,6 @@ public interface CraftixLauncher<E extends Exception>
      * @param server The current Craftix server
      * @param config Launch config sent by the client
      * @param auth Authentication result from the {@link AuthManager}
-     * @param callback A callback just before blocking to hide
-     *                 the launcher window
      */
-    void launch(CraftixServer server, LaunchConfig config, AuthResult auth, Runnable callback) throws E;
+    void launch(CraftixServer server, LaunchConfig config, AuthResult auth) throws E;
 }
