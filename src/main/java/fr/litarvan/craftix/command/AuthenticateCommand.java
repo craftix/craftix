@@ -18,7 +18,7 @@ public class AuthenticateCommand extends CraftixCommand
     public JSONObject call(CraftixServer server, JSONObject params) throws Exception
     {
         AuthManager auth = server.getAuthManager();
-        AuthResult result = auth.authenticate(server, params.getString("username"), params.getString("password"), params.getString("client-token"));
+        AuthResult result = auth.authenticate(server, params.getString("username"), params.getString("password"), params.getString("clientToken"));
 
         server.setAuthResult(result);
 

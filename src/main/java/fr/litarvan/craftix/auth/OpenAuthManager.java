@@ -19,13 +19,10 @@
 package fr.litarvan.craftix.auth;
 
 import fr.litarvan.craftix.CraftixServer;
-import fr.theshark34.openauth.AuthPoints;
-import fr.theshark34.openauth.AuthenticationException;
-import fr.theshark34.openauth.Authenticator;
-import fr.theshark34.openauth.model.AuthAgent;
-import fr.theshark34.openauth.model.AuthProfile;
-import fr.theshark34.openauth.model.response.AuthResponse;
-import fr.theshark34.openauth.model.response.RefreshResponse;
+import fr.litarvan.openauth.*;
+import fr.litarvan.openauth.model.AuthAgent;
+import fr.litarvan.openauth.model.AuthProfile;
+import fr.litarvan.openauth.model.response.*;
 import net.wytrem.logging.Logger;
 import net.wytrem.logging.LoggerFactory;
 

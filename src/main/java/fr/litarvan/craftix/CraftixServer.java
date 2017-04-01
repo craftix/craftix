@@ -21,6 +21,9 @@ package fr.litarvan.craftix;
 import fr.litarvan.craftix.auth.AuthManager;
 import fr.litarvan.craftix.auth.AuthResult;
 import fr.litarvan.craftix.auth.OpenAuthManager;
+import fr.litarvan.craftix.command.AuthenticateCommand;
+import fr.litarvan.craftix.command.LaunchCommand;
+import fr.litarvan.craftix.command.UpdateCommand;
 import fr.litarvan.craftix.launch.CraftixLauncher;
 import fr.litarvan.craftix.launch.OpenLauncherLibLauncher;
 import fr.litarvan.craftix.update.UpdateManager;
@@ -66,11 +69,6 @@ public class CraftixServer
     public static final JSONObject SUCCESS = new JSONObject(); static {
         SUCCESS.put("success", true);
     }
-
-    /**
-     * WebSocket closed reason when Minecraft was closed
-     */
-    public static final String REASON_CLOSED = "mc_closed";
 
     /**
      * The server
@@ -129,6 +127,10 @@ public class CraftixServer
         }
 
         logger = LoggerFactory.getLogger(CraftixServer.class);
+
+        this.registerCommand(new AuthenticateCommand());
+        this.registerCommand(new UpdateCommand());
+        this.registerCommand(new LaunchCommand());
     }
 
     public void start()
@@ -156,7 +158,14 @@ public class CraftixServer
 
             while ((line = in.readLine()) != null)
             {
-                onMessage(out, line);
+                try
+                {
+                    onMessage(out, line);
+                }
+                catch (Exception e)
+                {
+                    onError(out, e);
+                }
             }
 
             logger.info("Launcher closed connection, closing server");
@@ -197,6 +206,7 @@ public class CraftixServer
         object.put("version", VERSION);
 
         writer.print(object.toString());
+        writer.flush();
 
         logger.info("Connection opened ! Sent status message");
     }
@@ -218,6 +228,7 @@ public class CraftixServer
                 {
                     logger.info("Executing command '" + command.getIdentifier() + "'");
                     out.print(command.call(this, params).toString());
+                    out.flush();
                 }
                 catch (Exception e)
                 {
@@ -244,6 +255,7 @@ public class CraftixServer
         object.put("message", ex.getMessage());
 
         out.print(object.toString());
+        out.flush();
     }
 
     /**

@@ -42,29 +42,29 @@ public class AuthResult
     private String uuid;
 
     /**
-     * The client token (unique token generated for each computer)
-     */
-    private String clientToken;
-
-    /**
      * The access token (session id)
      */
     private String accessToken;
+
+    /**
+     * The client token (unique token generated for each computer)
+     */
+    private String clientToken;
 
     /**
      * Authentication result
      *
      * @param username The player username
      * @param uuid The player unique ID (as a UUID)
-     * @param clientToken The client token (unique token generated for each computer)
      * @param accessToken The access token (session id)
+     * @param clientToken The client token (unique token generated for each computer)
      */
-    public AuthResult(String username, String uuid, String clientToken, String accessToken)
+    public AuthResult(String username, String uuid, String accessToken, String clientToken)
     {
         this.username = username;
         this.uuid = uuid;
-        this.clientToken = clientToken;
         this.accessToken = accessToken;
+        this.clientToken = clientToken;
     }
 
     /**
@@ -84,18 +84,18 @@ public class AuthResult
     }
 
     /**
-     * @return The client token (unique token generated for each computer)
-     */
-    public String getClientToken()
-    {
-        return clientToken;
-    }
-
-    /**
      * @return The access token (session id)
      */
     public String getAccessToken()
     {
         return accessToken;
+    }
+
+    /**
+     * @return The client token (unique token generated for each computer)
+     */
+    public String getClientToken()
+    {
+        return clientToken;
     }
 }

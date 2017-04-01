@@ -17,7 +17,7 @@ public class UpdateCommand extends CraftixCommand
     public JSONObject call(CraftixServer server, JSONObject params) throws Exception
     {
         UpdateManager updater = server.getUpdateManager();
-        updater.update(server, params);
+        //updater.update(server, params);
 
         return CraftixServer.SUCCESS;
     }

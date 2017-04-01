@@ -22,6 +22,6 @@ dependencies {
     compile 'org.json:json:20160810'
     compile 'net.wytrem:wylog:1.2'
 
-    compile 'fr.litarvan:openauth:1.0.3-SNAPSHOT'
+    compile 'fr.litarvan:openauth:1.0.4'
     compile 'fr.litarvan:openlauncherlib:3.0.3-BETA'
 }

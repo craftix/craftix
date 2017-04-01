@@ -41,7 +41,6 @@ public class LaunchConfig
      */
     private String version;
 
-
     /**
      * Minecraft parameters to add (ex: --server play.bestserveroftheworld.eu)
      */
@@ -51,7 +50,6 @@ public class LaunchConfig
      * Java VM parameters to add (ex: -Xms1024M)
      */
     private String[] vmParams;
-
 
     /**
      * The Game tweaks (ex: forge) to load
